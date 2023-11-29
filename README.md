@@ -7,7 +7,7 @@ This is a simple script to automate installation of Plex Media Server in a TrueN
 This script **does not** address media storage for the jail.  That will ordinarily be one or more external datasets on your TrueNAS server, which you can mount to a desired location inside the jail.  Because this depends very much on your data layout and personal preferences, this is left up to the user.
 
 ## Installation
-On your TrueNAS server, change to a convenient directory, and download this script using `git clone https://github.com/danb35/truenas-iocage-plex`.  Then create a configuration file called `plex-config` using your preferred text editor.  In its simplest form, the file would look like this:
+On your TrueNAS server, change to a convenient directory, and download this script using `git clone https://github.com/james-berkheimer/truenas-iocage-plex.git`.  Then create a configuration file called `plex-config` using your preferred text editor.  In its simplest form, the file would look like this:
 ```
 JAIL_IP="192.168.1.75"
 DEFAULT_GW_IP="192.168.1.1"

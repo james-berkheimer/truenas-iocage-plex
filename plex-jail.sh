@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build an iocage jail under FreeNAS 11.2/11.3 using the current release of Plex Media Server
+# Build an iocage jail under TrueNAS 12.1 or greater using the current release of Plex Media Server
 # https://github.com/danb35/freenas-iocage-plex
 
 JAIL_IP=""
@@ -11,10 +11,11 @@ POOL_PATH=""
 PLEX_CONFIG_PATH=""
 PLEX_MEDIA_PATH=""
 INTERFACE="vnet0"
+RELEASE=$(freebsd-version | cut -d - -f -1)"-RELEASE"
 # BUGBUG In FreeNAS 11.3-U1, a 'plex' jail would not install pkg; any other name would
 # This was caused by the presence of another jail that had been named 'plex' at one
 # point. Might be CPE or FreeNAS. Since this script is used to migrate data off an
-# old plugin, side-stepping issue by naming jail 'pms'.  
+# old plugin, side-stepping issue by naming jail 'pms'.
 JAIL_NAME="pms"
 USE_BETA=0
 USE_BASEJAIL="-b"
@@ -22,6 +23,13 @@ PLEXPKG=""
 HW_TRANSCODE_RULESET="10"
 DEVFS_RULESET=""
 RULESET_SCRIPT="/root/scripts/plex-ruleset.sh"
+
+# Let's check if this is being run on a FreeNAS version.  If so let's exit
+if [ ! -z "$(echo ${RELEASE} | grep -E '11\.[0-9]|10\.[0-9]')" ]; then
+  echo "ERROR: This script is meant for TrueNAS 12.1 or greater. If you are running FreeNAS version 11 or earlier, please use this script: https://github.com/danb35/freenas-iocage-plex"
+  exit 0
+fi
+
 
 # $1 = devfs ruleset number
 # $2 = script location
@@ -35,17 +43,24 @@ createrulesetscript() {
     echo "ERROR: No plex ruleset script location specified. This is an internal script error."
     return 1
   fi
-  if [ -z "$(echo ${RELEASE} | grep '12.1')" ] && [ -z "$(echo ${RELEASE} | grep '11.3')" ] ; then
-    echo "This script only knows how to enable hardware transcode in FreeNAS 11.3 and TrueNAS 12.0"
+  # Extract the major and minor version numbers
+  MAJOR_VERSION=$(echo $RELEASE | cut -d. -f1)
+  MINOR_VERSION=$(echo $RELEASE | cut -d. -f2)
+
+  # Check if the version is 12.1 or greater
+  if [ $MAJOR_VERSION -gt 12 ] || [ $MAJOR_VERSION -eq 12 -a $MINOR_VERSION -ge 1 ]; then
+    echo "This script supports TrueNAS 12.1 or greater."
+  else
+    echo "This script only knows how to enable hardware transcode in TrueNAS 12.1 or greater."
     return 1
   fi
-  IGPU_MODEL=$(lspci -q | grep Intel | grep Graphics) 
+  IGPU_MODEL=$(lspci -q | grep Intel | grep Graphics)
   if [ ! -z "${IGPU_MODEL}" ] ; then
     echo "Found Intel GPU model " ${IGPU_MODEL} ", this bodes well."
     if [ -z "$(kldstat | grep i915kms.ko)" ] ; then
       kldload /boot/modules/i915kms.ko
       if [ -z "$(kldstat | grep i915kms.ko)" ] ; then
-        echo "Unable to load driver for Intel iGPU, please verify it is supported in this version of FreeNAS/TrueNAS"
+        echo "Unable to load driver for Intel iGPU, please verify it is supported in this version of TrueNAS"
         return 1
       fi
     fi
@@ -54,9 +69,9 @@ createrulesetscript() {
     echo "If you know you have supported hardware, please send the authors of this script"
     echo "the output of \"lspci\" on your system, and we'll improve the detection logic."
     return 1
-  fi 
+  fi
   if [ ! -f $2 ] ; then
-    echo "Creating script file" $2 
+    echo "Creating script file" $2
     cat > $2 <<EOF
 #!/bin/sh
 
@@ -101,7 +116,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "${SCRIPT}")
 . "${SCRIPTPATH}"/plex-config
 CONFIGS_PATH="${SCRIPTPATH}"/configs
-RELEASE=$(freebsd-version | cut -d - -f -1)"-RELEASE"
 
 # Check for plex-config and set configuration
 if ! [ -e "${SCRIPTPATH}"/plex-config ]; then
@@ -208,18 +222,12 @@ fi
 if [ -z "${PLEX_MEDIA_PATH}" ]; then
   iocage stop "${JAIL_NAME}"
 else
-  if [ $USE_HW_TRANSCODE -ne 0 ] && [ ! -z "$(echo ${RELEASE} | grep '11.3')" ] ; then
-  # Work around a FreeBSD 11.3 devfs issue
-    iocage stop "${JAIL_NAME}"
-    service devfs restart
-    iocage start "${JAIL_NAME}"
-  else
-    iocage restart "${JAIL_NAME}"
+  iocage restart "${JAIL_NAME}"
   fi
 fi
 
 echo "Installation Complete!"
-if [ -z "${PLEX_MEDIA_PATH}" ]; then 
+if [ -z "${PLEX_MEDIA_PATH}" ]; then
   echo "Mount your media folder into the jail, then start the jail."
 fi
 echo "Log in and configure your server by browsing to:"
