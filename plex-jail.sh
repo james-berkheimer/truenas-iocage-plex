@@ -223,7 +223,6 @@ if [ -z "${PLEX_MEDIA_PATH}" ]; then
   iocage stop "${JAIL_NAME}"
 else
   iocage restart "${JAIL_NAME}"
-  fi
 fi
 
 echo "Installation Complete!"
