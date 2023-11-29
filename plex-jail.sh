@@ -12,7 +12,7 @@ POOL_PATH=""
 PLEX_CONFIG_PATH=""
 PLEX_MEDIA_PATH=""
 INTERFACE="vnet0"
-RELEASE=""
+RELEASE_VERSION=""
 # BUGBUG In FreeNAS 11.3-U1, a 'plex' jail would not install pkg; any other name would
 # This was caused by the presence of another jail that had been named 'plex' at one
 # point. Might be CPE or FreeNAS. Since this script is used to migrate data off an
@@ -45,8 +45,8 @@ createrulesetscript() {
     return 1
   fi
   # Extract the major and minor version numbers
-  MAJOR_VERSION=$(echo $RELEASE | cut -d. -f1)
-  MINOR_VERSION=$(echo $RELEASE | cut -d. -f2)
+  MAJOR_VERSION=$(echo $RELEASE_VERSION | cut -d. -f1)
+  MINOR_VERSION=$(echo $RELEASE_VERSION | cut -d. -f2)
 
   # Check if the version is 12.0 or greater
   if [ $MAJOR_VERSION -gt 12 ] || [ $MAJOR_VERSION -eq 12 -a $MINOR_VERSION -ge 0 ]; then
@@ -124,6 +124,15 @@ if ! [ -e "${SCRIPTPATH}"/plex-config ]; then
   exit 1
 fi
 
+# Establish frebsd release version to be used
+if [ -z "$RELEASE_VERSION" ]; then
+  echo "RELEASE_VERSION is not configured. Pulling system release version"
+  RELEASE_VERSION=$(freebsd-version | cut -d - -f -1)"-RELEASE"
+  echo "using: $RELEASE_VERSION"
+else
+  echo "using version from plex-config: $RELEASE_VERSION"
+fi
+
 # Check that necessary variables were set by plex-config
 if [ -z "${JAIL_IP}" ]; then
   echo 'Configuration error: JAIL_IP must be set'
@@ -178,7 +187,7 @@ else
 fi
 # Create jail
 echo "Creating jail "${JAIL_NAME}". This may take a minute, please be patient."
-if ! iocage create --name "${JAIL_NAME}" -r "${RELEASE}" ip4_addr="${INTERFACE}|${JAIL_IP}/${NETMASK}" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" ${USE_BASEJAIL} ${DEVFS_RULESET}
+if ! iocage create --name "${JAIL_NAME}" -r "${RELEASE_VERSION}" ip4_addr="${INTERFACE}|${JAIL_IP}/${NETMASK}" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" ${USE_BASEJAIL} ${DEVFS_RULESET}
 then
 	echo "Failed to create jail"
 	exit 1
