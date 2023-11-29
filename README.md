@@ -2,6 +2,7 @@
 Scripted installation of Plex Media Server in a TrueNAS jail
 
 ## Description
+NOTE: I made this fork to try out some changes to make this automatically work with any TrueNAS version 12.1 and above.  **This has not been tested yet**
 This is a simple script to automate installation of Plex Media Server in a TrueNAS jail, following current best practices.  It will create a jail, install Plex Media Server (with or without PlexPass), configure Plex to store its preferences and metadata outside the jail, and create a cron job to update the installed packages every week using the FreeBSD `latest` repository rather than `quarterly`.
 
 This script **does not** address media storage for the jail.  That will ordinarily be one or more external datasets on your TrueNAS server, which you can mount to a desired location inside the jail.  Because this depends very much on your data layout and personal preferences, this is left up to the user.
