@@ -124,15 +124,6 @@ if ! [ -e "${SCRIPTPATH}"/plex-config ]; then
   exit 1
 fi
 
-# Establish frebsd release version to be used
-if [ -z "$RELEASE_VERSION" ]; then
-  echo "RELEASE_VERSION is not configured. Pulling system release version"
-  RELEASE_VERSION=$(freebsd-version | cut -d - -f -1)"-RELEASE"
-  echo "using: $RELEASE_VERSION"
-else
-  echo "using version from plex-config: $RELEASE_VERSION"
-fi
-
 # Check that necessary variables were set by plex-config
 if [ -z "${JAIL_IP}" ]; then
   echo 'Configuration error: JAIL_IP must be set'
@@ -185,6 +176,17 @@ else
 	echo "Using stable-release plexmediaserver code"
 	PLEXPKG="plexmediaserver"
 fi
+
+# Establish frebsd release version to be used
+echo "--------------------RELEASE_VERSION: $RELEASE_VERSION"
+if [ -z "$RELEASE_VERSION" ]; then
+  echo "RELEASE_VERSION is not configured. Pulling system release version"
+  RELEASE_VERSION=$(freebsd-version | cut -d - -f -1)"-RELEASE"
+  echo "using: $RELEASE_VERSION"
+else
+  echo "using version from plex-config: $RELEASE_VERSION"
+fi
+
 # Create jail
 echo "Creating jail "${JAIL_NAME}". This may take a minute, please be patient."
 if ! iocage create --name "${JAIL_NAME}" -r "${RELEASE_VERSION}" ip4_addr="${INTERFACE}|${JAIL_IP}/${NETMASK}" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" ${USE_BASEJAIL} ${DEVFS_RULESET}
