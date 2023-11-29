@@ -1,6 +1,7 @@
 #!/bin/sh
-# Build an iocage jail under TrueNAS 12.1 or greater using the current release of Plex Media Server
-# https://github.com/danb35/freenas-iocage-plex
+# Build an iocage jail under TrueNAS 12.0 or greater using the current release of Plex Media Server
+# https://github.com/james-berkheimer/truenas-iocage-plex
+# Forked from https://github.com/danb35/freenas-iocage-plex
 
 JAIL_IP=""
 DEFAULT_GW_IP=""
@@ -11,7 +12,7 @@ POOL_PATH=""
 PLEX_CONFIG_PATH=""
 PLEX_MEDIA_PATH=""
 INTERFACE="vnet0"
-RELEASE=$(freebsd-version | cut -d - -f -1)"-RELEASE"
+RELEASE=""
 # BUGBUG In FreeNAS 11.3-U1, a 'plex' jail would not install pkg; any other name would
 # This was caused by the presence of another jail that had been named 'plex' at one
 # point. Might be CPE or FreeNAS. Since this script is used to migrate data off an
@@ -47,11 +48,11 @@ createrulesetscript() {
   MAJOR_VERSION=$(echo $RELEASE | cut -d. -f1)
   MINOR_VERSION=$(echo $RELEASE | cut -d. -f2)
 
-  # Check if the version is 12.1 or greater
-  if [ $MAJOR_VERSION -gt 12 ] || [ $MAJOR_VERSION -eq 12 -a $MINOR_VERSION -ge 1 ]; then
-    echo "This script supports TrueNAS 12.1 or greater."
+  # Check if the version is 12.0 or greater
+  if [ $MAJOR_VERSION -gt 12 ] || [ $MAJOR_VERSION -eq 12 -a $MINOR_VERSION -ge 0 ]; then
+    echo "This script supports TrueNAS 12.0 or greater."
   else
-    echo "This script only knows how to enable hardware transcode in TrueNAS 12.1 or greater."
+    echo "This script only knows how to enable hardware transcode in TrueNAS 12.0 or greater."
     return 1
   fi
   IGPU_MODEL=$(lspci -q | grep Intel | grep Graphics)
